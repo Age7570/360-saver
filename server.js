@@ -3,6 +3,7 @@ const cors = require('cors');
 const axios = require('axios');
 
 const app = express();
+app.use(express.static('public'));
 const PORT = process.env.PORT || 3000;
 
 // Enable CORS so your frontend web tool can query this backend API easily
