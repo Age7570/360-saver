@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All-in-One Social Media Downloader</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --background: #0F172A;
+            --card-bg: #1E293B;
+            --text-main: #F8FAFC;
+            --text-muted: #94A3B8;
+            --success: #10B981;
+            --error: #EF4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            background: linear-gradient(to right, #6366F1, #A855F7, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 24px;
+        }
+
+        .supported-platforms {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 24px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .platform {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .instagram { color: #E1306C; }
+        .tiktok { color: #00F2FE; }
+        .youtube { color: #FF0000; }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 8px;
+            border: 2px solid #334155;
+            background: #0F172A;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="url"]:focus {
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            margin: 20px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Result Area */
+        .result-card {
+            display: none;
+            margin-top: 25px;
+            padding: 20px;
+            background: #0F172A;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            text-align: left;
+        }
+
+        .result-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .media-preview {
+            width: 100%;
+            max-height: 250px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .download-btn {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            background-color: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .download-btn:hover {
+            opacity: 0.9;
+        }
+
+        .error-message {
+            display: none;
+            margin-top: 20px;
+            padding: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            color: var(--error);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Media Downloader</h1>
+        <p class="subtitle">Download videos and images instantly</p>
+
+        <div class="supported-platforms">
+            <span class="platform instagram">Instagram</span>
+            <span class="platform tiktok">TikTok</span>
+            <span class="platform youtube">YouTube</span>
+        </div>
+
+        <form id="downloaderForm" onsubmit="handleDownload(event)">
+            <div class="input-group">
+                <input 
+                    type="url" 
+                    id="urlInput" 
+                    placeholder="Paste your link here (e.g., https://instagram.com...)" 
+                    required
+                >
+                <button type="submit" id="submitBtn">Fetch Media</button>
+            </div>
+        </form>
+
+        <div class="spinner" id="spinner"></div>
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- Dynamic Output Result Card -->
+        <div class="result-card" id="resultCard">
+            <h3 id="resultTitle">Media Ready</h3>
+            <img src="" alt="Preview" class="media-preview" id="mediaPreview">
+            <a href="#" target="_blank" rel="noopener noreferrer" class="download-btn" id="downloadLink">
+                Download Now File
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE THIS URL with your live Pxxl Africa backend endpoint once deployed!
+        // Example: "https://pxxl.app"
+        const BACKEND_BASE_URL = window.location.origin; 
+
+        async function handleDownload(event) {
+            event.preventDefault();
+            
+            const urlInput = document.getElementById('urlInput').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            const errorMessage = document.getElementById('errorMessage');
+            const resultCard = document.getElementById('resultCard');
+            const mediaPreview = document.getElementById('mediaPreview');
+            const downloadLink = document.getElementById('downloadLink');
+            const resultTitle = document.getElementById('resultTitle');
+
+            // Reset UI States
+            errorMessage.style.display = 'none';
+            resultCard.style.display = 'none';
+            mediaPreview.style.display = 'none';
+            submitBtn.disabled = true;
+            spinner.style.display = 'block';
+
+            // Detect platform type automatically based on input string matching
+            let endpoint = '';
+            if (urlInput.includes('instagram.com')) {
+                endpoint = '/api/download/instagram';
+            } else if (urlInput.includes('tiktok.com')) {
+                endpoint = '/api/download/tiktok';
+            } else if (urlInput.includes('youtube.com') || urlInput.includes('youtu.be')) {
+                endpoint = '/api/download/youtube';
+            } else {
+                showError("Unsupported platform URL. Please enter an Instagram, TikTok, or YouTube link.");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${BACKEND_BASE_URL}${endpoint}?url=${encodeURIComponent(urlInput)}`);
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || "Failed to parse target URL media links.");
+                }
+
+                // Render matching data to user interface successfully
+                resultTitle.innerText = `${data.title || 'Your Media'} is Ready`;
+                downloadLink.href = data.downloadUrl;
+                
+                if (data.thumbnail) {
+                    mediaPreview.src = data.thumbnail;
+                    mediaPreview.style.display = 'block';
+                }
+
+                resultCard.style.display = 'block';
+            } catch (err) {
+                showError(err.message || "An unexpected processing error occurred. Please try again.");
+            } finally {
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const submitBtn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('spinner');
+            
+            errorMessage.innerText = message;
+            errorMessage.style.display = 'block';
+            submitBtn.disabled = false;
+            spinner.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
